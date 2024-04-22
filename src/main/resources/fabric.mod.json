@@ -2,25 +2,25 @@
   "schemaVersion": 1,
   "id": "serverplayertimeticker",
   "version": "${version}",
-
   "name": "ServerPlayertimeTicker",
   "description": "",
-  "authors": [],
-  "contact": {},
-
+  "authors": ["FreeGamer"],
+  "contact": {
+    "repo": "https://github.com/freeg/ServerPlayertimeTicker"
+  },
   "license": "All-Rights-Reserved",
-  "icon": "assets/serverplayertimeticker/icon.png",
-
   "environment": "*",
-  "entrypoints": {},
-
-          "mixins": [
-        "serverplayertimeticker.mixins.json"
-      ],
-    
+  "entrypoints": {
+    "main": [
+      "freegamerdev.serverplayertimeticker.ServerPlayertimeTicker"
+    ]
+  },
+  "mixins": [
+    "serverplayertimeticker.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=${loader_version}",
-              "fabric": "*",
-          "minecraft": "${minecraft_version}"
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
   }
 }
