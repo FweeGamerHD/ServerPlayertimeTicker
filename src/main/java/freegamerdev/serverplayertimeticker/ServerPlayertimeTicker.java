@@ -19,7 +19,7 @@ public class ServerPlayertimeTicker implements ModInitializer {
     private long lastUpdateTime = 0;
 
     // Define the maximum playtime in minutes
-    private static final int MAX_PLAYTIME_SECONDS = 120 * 60;
+    private static final int MAX_PLAYTIME_SECONDS = 2 * 60;
 
     // Map to store player playtimes
     private HashMap<String, Integer> playerPlaytimes = new HashMap<>();
@@ -56,8 +56,11 @@ public class ServerPlayertimeTicker implements ModInitializer {
                 int remainingMinutes = remainingPlaytime / 60;
                 int remainingSeconds = remainingPlaytime % 60;
 
-                // Send a message displaying the remaining playtime
-                player.sendMessage(Text.of("Remaining Playtime: " + remainingMinutes + " minutes and " + remainingSeconds + " seconds"), false);
+                // Construct the message for the action bar
+                Text actionBarText = Text.of("Remaining Playtime: " + remainingMinutes + " minutes and " + remainingSeconds + " seconds");
+
+                // Send action bar message to player
+                player.sendMessage(actionBarText, true);
 
                 // Check if player playtime exceeds the maximum playtime
                 if (remainingPlaytime <= 0) {
