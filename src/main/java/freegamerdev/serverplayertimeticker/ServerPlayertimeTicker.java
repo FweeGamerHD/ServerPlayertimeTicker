@@ -16,8 +16,10 @@ import java.util.HashMap;
 
 public class ServerPlayertimeTicker implements ModInitializer {
 
+    private long lastUpdateTime = 0;
+
     // Define the maximum playtime in minutes
-    private static final int MAX_PLAYTIME_MINUTES = 120;
+    private static final int MAX_PLAYTIME_SECONDS = 120 * 60;
 
     // Map to store player playtimes
     private HashMap<String, Integer> playerPlaytimes = new HashMap<>();
@@ -37,38 +39,48 @@ public class ServerPlayertimeTicker implements ModInitializer {
     }
 
     private void onServerTick(MinecraftServer server) {
-        // Iterate through all online players
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            String playerUUID = player.getUuid().toString(); // Get the player's UUID as a string
-            // Increment player playtime
-            playerPlaytimes.put(playerUUID, playerPlaytimes.getOrDefault(playerUUID, 0) + 1);
-
-            // Check if player playtime exceeds the maximum playtime
-            if (playerPlaytimes.get(playerUUID) > MAX_PLAYTIME_MINUTES * 20 * 60) { // Convert minutes to ticks
-                // Kick the player from the server
-                player.networkHandler.disconnect(Text.of("You have exceeded the maximum playtime for today."));
-            }
-        }
-
-        // Update PlaytimeData with player playtimes
-        playtimeData.setPlayerPlaytimes(playerPlaytimes);
-
-        // Save playtime data
-        try {
-            PlaytimeDataManager.savePlaytimeData(playtimeData);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Get the current system time in milliseconds
         long currentTimeMillis = System.currentTimeMillis();
+        long elapsedTime = currentTimeMillis - lastUpdateTime;
 
-        // Convert the current time to LocalDate
-        LocalDate currentDate = Instant.ofEpochMilli(currentTimeMillis).atZone(ZoneId.systemDefault()).toLocalDate();
+        if (elapsedTime >= 1000) {
+            lastUpdateTime = currentTimeMillis;
 
-        // Reset playtime for the next day
-        if (currentDate.isAfter(LocalDate.ofYearDay(currentDate.getYear(), currentDate.getDayOfYear()))) {
-            playerPlaytimes.clear();
+            // Iterate through all online players
+            for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+                String playerUUID = player.getUuid().toString();
+
+                // Decrement player playtime by 1 second
+                playerPlaytimes.put(playerUUID, playerPlaytimes.getOrDefault(playerUUID, MAX_PLAYTIME_SECONDS) - 1);
+
+                int remainingPlaytime = playerPlaytimes.get(playerUUID);
+                int remainingMinutes = remainingPlaytime / 60;
+                int remainingSeconds = remainingPlaytime % 60;
+
+                // Send a message displaying the remaining playtime
+                player.sendMessage(Text.of("Remaining Playtime: " + remainingMinutes + " minutes and " + remainingSeconds + " seconds"), false);
+
+                // Check if player playtime exceeds the maximum playtime
+                if (remainingPlaytime <= 0) {
+                    // Kick the player from the server
+                    player.networkHandler.disconnect(Text.of("You have exceeded the maximum playtime for today."));
+                }
+            }
+
+            // Update PlaytimeData with player playtimes
+            playtimeData.setPlayerPlaytimes(playerPlaytimes);
+
+            // Save playtime data
+            try {
+                PlaytimeDataManager.savePlaytimeData(playtimeData);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Reset playtime for the next day
+            LocalDate currentDate = Instant.ofEpochMilli(currentTimeMillis).atZone(ZoneId.systemDefault()).toLocalDate();
+            if (currentDate.isAfter(LocalDate.ofYearDay(currentDate.getYear(), currentDate.getDayOfYear()))) {
+                playerPlaytimes.clear();
+            }
         }
     }
 
