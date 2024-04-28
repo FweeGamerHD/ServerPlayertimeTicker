@@ -66,12 +66,12 @@ public class ServerPlayertimeTicker implements ModInitializer {
 
                 String playerUUID = player.getUuid().toString();
 
-                // Decrement player playtime by 1 second
-                playerPlaytimes.put(playerUUID, playerPlaytimes.getOrDefault(playerUUID, MAX_PLAYTIME_SECONDS) - 1);
+                // Increment player playtime by 1 second
+                playerPlaytimes.put(playerUUID, playerPlaytimes.getOrDefault(playerUUID, 0) + 1);
 
                 int remainingPlaytime = playerPlaytimes.get(playerUUID);
-                int remainingMinutes = remainingPlaytime / 60;
-                int remainingSeconds = remainingPlaytime % 60;
+                int remainingMinutes = (MAX_PLAYTIME_SECONDS - remainingPlaytime) / 60;
+                int remainingSeconds = (MAX_PLAYTIME_SECONDS - remainingPlaytime) % 60;
 
                 // Construct the message for the action bar
                 Text actionBarText = Text.of("Remaining Playtime: " + remainingMinutes + " minutes and " + remainingSeconds + " seconds");
@@ -80,7 +80,7 @@ public class ServerPlayertimeTicker implements ModInitializer {
                 player.sendMessage(actionBarText, true);
 
                 // Check if player playtime exceeds the maximum playtime
-                if (remainingPlaytime <= 0) {
+                if (remainingPlaytime >= MAX_PLAYTIME_SECONDS) {
                     // Kick the player from the server
                     player.networkHandler.disconnect(Text.of("You have exceeded the maximum playtime for today."));
                     // Add the player to the removal list
