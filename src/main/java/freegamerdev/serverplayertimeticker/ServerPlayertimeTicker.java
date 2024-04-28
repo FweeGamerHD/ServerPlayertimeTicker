@@ -34,6 +34,7 @@ public class ServerPlayertimeTicker implements ModInitializer {
     public void onInitialize() {
         try {
             playtimeData = PlaytimeDataManager.loadPlaytimeData();
+            playerPlaytimes = playtimeData.getPlayerPlaytimes();
         } catch (IOException e) {
             e.printStackTrace();
             playtimeData = new PlaytimeData();
