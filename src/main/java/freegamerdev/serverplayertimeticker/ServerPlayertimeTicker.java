@@ -4,6 +4,9 @@ import freegamerdev.serverplayertimeticker.DataClasses.PlaytimeData;
 import freegamerdev.serverplayertimeticker.DataClasses.PlaytimeDataManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -12,7 +15,9 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class ServerPlayertimeTicker implements ModInitializer {
 
@@ -47,6 +52,15 @@ public class ServerPlayertimeTicker implements ModInitializer {
 
             // Iterate through all online players
             for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+                LuckPerms luckPerms = LuckPermsProvider.get();
+                User user = luckPerms.getUserManager().getUser(player.getUuid());
+
+                // Check if the player has the permission
+                if (user != null && user.getCachedData().getPermissionData().checkPermission("playtime.immune").asBoolean()) {
+                    // Player has the permission, so skip processing
+                    continue;
+                }
+
                 String playerUUID = player.getUuid().toString();
 
                 // Decrement player playtime by 1 second
