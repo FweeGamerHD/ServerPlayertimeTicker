@@ -50,6 +50,9 @@ public class ServerPlayertimeTicker implements ModInitializer {
         if (elapsedTime >= 1000) {
             lastUpdateTime = currentTimeMillis;
 
+            // List to store players to be removed
+            List<String> playersToRemove = new ArrayList<>();
+
             // Iterate through all online players
             for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
                 LuckPerms luckPerms = LuckPermsProvider.get();
@@ -80,7 +83,14 @@ public class ServerPlayertimeTicker implements ModInitializer {
                 if (remainingPlaytime <= 0) {
                     // Kick the player from the server
                     player.networkHandler.disconnect(Text.of("You have exceeded the maximum playtime for today."));
+                    // Add the player to the removal list
+                    playersToRemove.add(playerUUID);
                 }
+            }
+
+            // Remove players from the playtime map
+            for (String playerUUID : playersToRemove) {
+                playerPlaytimes.remove(playerUUID);
             }
 
             // Update PlaytimeData with player playtimes
