@@ -49,41 +49,43 @@ public class ServerPlayertimeTicker implements ModInitializer {
         if (elapsedTime >= 1000) {
             lastUpdateTime = currentTimeMillis;
 
-            // Iterate through all online players
-            for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-                LuckPerms luckPerms = LuckPermsProvider.get();
-                User user = luckPerms.getUserManager().getUser(player.getUuid());
+            synchronized (playerPlaytimes) {
+                // Iterate through all online players
+                for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+                    LuckPerms luckPerms = LuckPermsProvider.get();
+                    User user = luckPerms.getUserManager().getUser(player.getUuid());
 
-                // Check if the player has the permission
-                if (user != null && user.getCachedData().getPermissionData().checkPermission("playtime.immune").asBoolean()) {
-                    // Player has the permission, so skip processing
-                    continue;
+                    // Check if the player has the permission
+                    if (user != null && user.getCachedData().getPermissionData().checkPermission("playtime.immune").asBoolean()) {
+                        // Player has the permission, so skip processing
+                        continue;
+                    }
+
+                    String playerUUID = player.getUuid().toString();
+
+                    // Increment player playtime by 1 second
+                    playerPlaytimes.put(playerUUID, playerPlaytimes.getOrDefault(playerUUID, 0) + 1);
+
+                    int remainingPlaytime = playerPlaytimes.get(playerUUID);
+                    int remainingMinutes = (MAX_PLAYTIME_SECONDS - remainingPlaytime) / 60;
+                    int remainingSeconds = (MAX_PLAYTIME_SECONDS - remainingPlaytime) % 60;
+
+                    // Construct the message for the action bar
+                    Text actionBarText = Text.of("Remaining Playtime: " + remainingMinutes + " minutes and " + remainingSeconds + " seconds");
+
+                    // Send action bar message to player
+                    player.sendMessage(actionBarText, true);
+
+                    // Check if player playtime exceeds the maximum playtime
+                    if (remainingPlaytime >= MAX_PLAYTIME_SECONDS) {
+                        // Kick the player from the server
+                        player.networkHandler.disconnect(Text.of("You have exceeded the maximum playtime for today."));
+                    }
                 }
 
-                String playerUUID = player.getUuid().toString();
-
-                // Increment player playtime by 1 second
-                playerPlaytimes.put(playerUUID, playerPlaytimes.getOrDefault(playerUUID, 0) + 1);
-
-                int remainingPlaytime = playerPlaytimes.get(playerUUID);
-                int remainingMinutes = (MAX_PLAYTIME_SECONDS - remainingPlaytime) / 60;
-                int remainingSeconds = (MAX_PLAYTIME_SECONDS - remainingPlaytime) % 60;
-
-                // Construct the message for the action bar
-                Text actionBarText = Text.of("Remaining Playtime: " + remainingMinutes + " minutes and " + remainingSeconds + " seconds");
-
-                // Send action bar message to player
-                player.sendMessage(actionBarText, true);
-
-                // Check if player playtime exceeds the maximum playtime
-                if (remainingPlaytime >= MAX_PLAYTIME_SECONDS) {
-                    // Kick the player from the server
-                    player.networkHandler.disconnect(Text.of("You have exceeded the maximum playtime for today."));
-                }
+                // Update PlaytimeData with player playtimes
+                playtimeData.setPlayerPlaytimes(playerPlaytimes);
             }
-
-            // Update PlaytimeData with player playtimes
-            playtimeData.setPlayerPlaytimes(playerPlaytimes);
 
             // Save playtime data
             try {
@@ -91,12 +93,14 @@ public class ServerPlayertimeTicker implements ModInitializer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
             // Reset playtime for the next day
             LocalDate currentDate = Instant.ofEpochMilli(currentTimeMillis).atZone(ZoneId.systemDefault()).toLocalDate();
             if (currentDate.isAfter(LocalDate.ofYearDay(currentDate.getYear(), currentDate.getDayOfYear()))) {
-                playerPlaytimes.clear();
+                synchronized (playerPlaytimes) {
+                    playerPlaytimes.clear();
+                }
             }
         }
     }
-
 }
