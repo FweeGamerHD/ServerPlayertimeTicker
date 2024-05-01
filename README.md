@@ -18,6 +18,7 @@ Server Player Time Ticker is a Minecraft Fabric mod that tracks and manages play
 2. **Configuration:**
    - After starting the server with the mod installed, a configuration file (`serverplayertime.json`) will be generated in the `config` folder.
    - Edit the configuration file to adjust settings such as maximum playtime and action bar message format.
+   - Note: Use %m and %s as seen in the default config to place the minute and second counter in the text.
 
 3. **Operation:**
    - The mod will automatically start tracking playtime for each player as soon as they join the server.
