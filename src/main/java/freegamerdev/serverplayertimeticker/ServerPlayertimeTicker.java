@@ -19,17 +19,14 @@ import java.util.HashMap;
 
 public class ServerPlayertimeTicker implements ModInitializer {
 
-    private long lastUpdateTime = 0;
-
     private int MAX_PLAYTIME_SECONDS = 120 * 60;
-
     private String ACTIONBAR_TEXT = "Remaining Playtime: %m minutes and %s seconds";
 
-    private HashMap<String, Integer> playerPlaytimes = new HashMap<>();
-
-    private PlaytimeData playtimeData;
-
+    private long lastUpdateTime = 0;
     private LocalDate lastCheckedDate = LocalDate.now();
+
+    private HashMap<String, Integer> playerPlaytimes = new HashMap<>();
+    private PlaytimeData playtimeData;
 
     @Override
     public void onInitialize() {
