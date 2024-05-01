@@ -36,4 +36,5 @@ Contributions are welcome! If you'd like to contribute to the development of thi
 
 ## License
 
-This mod is licensed under the [MIT License](LICENSE).
+This mod is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](LICENSE).
+
