@@ -1,5 +1,7 @@
 package freegamerdev.serverplayertimeticker;
 
+import freegamerdev.serverplayertimeticker.DataClasses.ConfigData;
+import freegamerdev.serverplayertimeticker.DataClasses.ConfigDataManager;
 import freegamerdev.serverplayertimeticker.DataClasses.PlaytimeData;
 import freegamerdev.serverplayertimeticker.DataClasses.PlaytimeDataManager;
 import net.fabricmc.api.ModInitializer;
@@ -21,14 +23,15 @@ public class ServerPlayertimeTicker implements ModInitializer {
 
     private long lastUpdateTime = 0;
 
-    // Define the maximum playtime in minutes
-    private static final int MAX_PLAYTIME_SECONDS = 2 * 60;
+    private int MAX_PLAYTIME_SECONDS = 120 * 60;
 
-    // Map to store player playtimes
+    private String ACTIONBAR_TEXT = "Remaining Playtime: %m minutes and %s seconds";
+
     private HashMap<String, Integer> playerPlaytimes = new HashMap<>();
 
-    // Playtime data
     private PlaytimeData playtimeData;
+
+    private LocalDate lastCheckedDate = LocalDate.now();
 
     @Override
     public void onInitialize() {
@@ -48,6 +51,14 @@ public class ServerPlayertimeTicker implements ModInitializer {
 
         if (elapsedTime >= 1000) {
             lastUpdateTime = currentTimeMillis;
+
+            try {
+                ConfigData configData = ConfigDataManager.loadConfigData();
+                MAX_PLAYTIME_SECONDS = configData.getMaxPlaytimeMinutes() * 60;
+                ACTIONBAR_TEXT = configData.getActionbarText();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             synchronized (playerPlaytimes) {
                 // Iterate through all online players
@@ -71,7 +82,8 @@ public class ServerPlayertimeTicker implements ModInitializer {
                     int remainingSeconds = (MAX_PLAYTIME_SECONDS - remainingPlaytime) % 60;
 
                     // Construct the message for the action bar
-                    Text actionBarText = Text.of("Remaining Playtime: " + remainingMinutes + " minutes and " + remainingSeconds + " seconds");
+                    String actionbarText = ACTIONBAR_TEXT.replace("%m", String.valueOf(remainingMinutes)).replace("%s", String.valueOf(remainingSeconds));
+                    Text actionBarText = Text.of(actionbarText);
 
                     // Send action bar message to player
                     player.sendMessage(actionBarText, true);
@@ -95,11 +107,15 @@ public class ServerPlayertimeTicker implements ModInitializer {
             }
 
             // Reset playtime for the next day
-            LocalDate currentDate = Instant.ofEpochMilli(currentTimeMillis).atZone(ZoneId.systemDefault()).toLocalDate();
-            if (currentDate.isAfter(LocalDate.ofYearDay(currentDate.getYear(), currentDate.getDayOfYear()))) {
+            LocalDate currentDate = LocalDate.now();
+
+            if (!currentDate.isEqual(lastCheckedDate)) {
+                lastCheckedDate = currentDate;
                 synchronized (playerPlaytimes) {
                     playerPlaytimes.clear();
+                    playtimeData.setPlayerPlaytimes(playerPlaytimes);
                 }
+                server.sendMessage(Text.of("Resetting playtime due to new day starting."));
             }
         }
     }
