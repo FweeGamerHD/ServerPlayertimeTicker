@@ -12,7 +12,7 @@ Server Player Time Ticker is a Minecraft Fabric mod that tracks and manages play
 ## Usage
 
 1. **Installation:**
-   - Download the latest release JAR file from the [Releases](https://github.com/yourusername/server-playertime-ticker/releases) page.
+   - Download the latest release JAR file from the [Releases](https://github.com/FweeGamerHD/ServerPlayertimeTicker/releases) page.
    - Place the downloaded JAR file into the `mods` folder of your Minecraft Fabric server.
    
 2. **Configuration:**
