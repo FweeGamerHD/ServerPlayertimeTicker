@@ -21,6 +21,7 @@ public class ServerPlayertimeTicker implements ModInitializer {
 
     private int MAX_PLAYTIME_SECONDS = 120 * 60;
     private String ACTIONBAR_TEXT = "Remaining Playtime: %m minutes and %s seconds";
+    private String KICK_MESSAGE = "You have exceeded the maximum playtime for today.";
 
     private long lastUpdateTime = 0;
     private LocalDate lastCheckedDate = LocalDate.now();
@@ -51,6 +52,7 @@ public class ServerPlayertimeTicker implements ModInitializer {
                 ConfigData configData = ConfigDataManager.loadConfigData();
                 MAX_PLAYTIME_SECONDS = configData.getMaxPlaytimeMinutes() * 60;
                 ACTIONBAR_TEXT = configData.getActionbarText();
+                KICK_MESSAGE = configData.getKickMessage();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -86,7 +88,7 @@ public class ServerPlayertimeTicker implements ModInitializer {
                     // Check if player playtime exceeds the maximum playtime
                     if (remainingPlaytime >= MAX_PLAYTIME_SECONDS) {
                         // Kick the player from the server
-                        player.networkHandler.disconnect(Text.of("You have exceeded the maximum playtime for today."));
+                        player.networkHandler.disconnect(Text.of(KICK_MESSAGE));
                     }
                 }
 
