@@ -5,6 +5,7 @@ import freegamerdev.serverplayertimeticker.DataClasses.ConfigDataManager;
 import freegamerdev.serverplayertimeticker.DataClasses.PlaytimeData;
 import freegamerdev.serverplayertimeticker.DataClasses.PlaytimeDataManager;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
@@ -16,6 +17,10 @@ import net.minecraft.text.Text;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ServerPlayertimeTicker implements ModInitializer {
 
@@ -24,21 +29,32 @@ public class ServerPlayertimeTicker implements ModInitializer {
     private String KICK_MESSAGE = "You have exceeded the maximum playtime for today.";
 
     private long lastUpdateTime = 0;
-    private LocalDate lastCheckedDate = LocalDate.now();
 
     private HashMap<String, Integer> playerPlaytimes = new HashMap<>();
     private PlaytimeData playtimeData;
+
+    private ScheduledExecutorService executorService;
 
     @Override
     public void onInitialize() {
         try {
             playtimeData = PlaytimeDataManager.loadPlaytimeData();
-            playerPlaytimes = playtimeData.getPlayerPlaytimes();
+            if (playtimeData.getLastCheckedDate().isEqual(LocalDate.now())) {
+                playerPlaytimes = playtimeData.getPlayerPlaytimes();
+            } else {
+                playtimeData.setLastCheckedDate(LocalDate.now());
+            }
         } catch (IOException e) {
             e.printStackTrace();
             playtimeData = new PlaytimeData();
         }
+
+        executorService = Executors.newScheduledThreadPool(2);
+
         ServerTickEvents.END_SERVER_TICK.register(this::onServerTick);
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            onShutdown();
+        });
     }
 
     private void onServerTick(MinecraftServer server) {
@@ -106,14 +122,37 @@ public class ServerPlayertimeTicker implements ModInitializer {
             // Reset playtime for the next day
             LocalDate currentDate = LocalDate.now();
 
-            if (!currentDate.isEqual(lastCheckedDate)) {
-                lastCheckedDate = currentDate;
+            if (!currentDate.isEqual(playtimeData.getLastCheckedDate())) {
+                playtimeData.setLastCheckedDate(currentDate);
                 synchronized (playerPlaytimes) {
                     playerPlaytimes.clear();
                     playtimeData.setPlayerPlaytimes(playerPlaytimes);
                 }
                 server.sendMessage(Text.of("Resetting playtime due to new day starting."));
             }
+        }
+    }
+
+    private void onShutdown() {
+        shutdownExecutorService();
+    }
+
+    private void shutdownExecutorService() {
+        executorService.shutdown();
+
+        try {
+            // Wait a while for existing tasks to terminate
+            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                executorService.shutdownNow(); // Cancel currently executing tasks
+                // Wait a while for tasks to respond to being cancelled
+                if (!executorService.awaitTermination(60, TimeUnit.SECONDS))
+                    System.err.println("Executor service did not terminate");
+            }
+        } catch (InterruptedException ie) {
+            // (Re-)Cancel if current thread also interrupted
+            executorService.shutdownNow();
+            // Preserve interrupt status
+            Thread.currentThread().interrupt();
         }
     }
 }
