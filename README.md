@@ -8,6 +8,7 @@ ServerPlayertimeTicker is a Minecraft Fabric mod that tracks and manages playtim
 - **Maximum Playtime Limit:** Enforces a maximum playtime limit for each player, kicking them from the server if exceeded.
 - **Configurable:** Customize settings such as maximum playtime and hotbar message using a configuration file.
 - **Real-time Updates:** Syncs configuration changes in almost real-time, ensuring the server adapts quickly.
+- **Luckperms usage:** Using the "playtime.immune" permission on luckperms you can exclude any particular player from having a countdown.
 
 ## Usage
 
