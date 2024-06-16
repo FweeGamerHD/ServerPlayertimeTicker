@@ -17,7 +17,7 @@ import net.minecraft.text.Text;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.Objects;
+import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +75,9 @@ public class ServerPlayertimeTicker implements ModInitializer {
 
             synchronized (playerPlaytimes) {
                 // Iterate through all online players
-                for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+                Iterator<ServerPlayerEntity> playerIterator = server.getPlayerManager().getPlayerList().iterator();
+                while (playerIterator.hasNext()) {
+                    ServerPlayerEntity player = playerIterator.next();
                     LuckPerms luckPerms = LuckPermsProvider.get();
                     User user = luckPerms.getUserManager().getUser(player.getUuid());
 
