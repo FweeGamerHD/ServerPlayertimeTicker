@@ -2,6 +2,8 @@
 
 ServerPlayertimeTicker is a Minecraft Fabric mod that tracks and manages playtime for players on a server.
 
+[Modrinth](https://modrinth.com/mod/serverplayertimeticker)
+
 ## Features
 
 - **Automatic Playtime Tracking:** Automatically tracks the playtime of each player on the server.
