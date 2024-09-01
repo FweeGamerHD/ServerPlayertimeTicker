@@ -16,8 +16,10 @@ import net.minecraft.text.Text;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -74,47 +76,47 @@ public class ServerPlayertimeTicker implements ModInitializer {
             }
 
             synchronized (playerPlaytimes) {
-                // Iterate through all online players
+                // Create a list to hold players who need to be kicked
+                List<ServerPlayerEntity> playersToKick = new ArrayList<>();
+
                 Iterator<ServerPlayerEntity> playerIterator = server.getPlayerManager().getPlayerList().iterator();
                 while (playerIterator.hasNext()) {
                     ServerPlayerEntity player = playerIterator.next();
                     LuckPerms luckPerms = LuckPermsProvider.get();
                     User user = luckPerms.getUserManager().getUser(player.getUuid());
 
-                    // Check if the player has the permission
                     if (user != null && user.getCachedData().getPermissionData().checkPermission("playtime.immune").asBoolean()) {
-                        // Player has the permission, so skip processing
-                        continue;
+                        continue; // Skip players with immunity
                     }
 
                     String playerUUID = player.getUuid().toString();
-
-                    // Increment player playtime by 1 second
                     playerPlaytimes.put(playerUUID, playerPlaytimes.getOrDefault(playerUUID, 0) + 1);
 
                     int remainingPlaytime = playerPlaytimes.get(playerUUID);
                     int remainingMinutes = (MAX_PLAYTIME_SECONDS - remainingPlaytime) / 60;
                     int remainingSeconds = (MAX_PLAYTIME_SECONDS - remainingPlaytime) % 60;
 
-                    // Construct the message for the action bar
                     String actionbarText = ACTIONBAR_TEXT.replace("%m", String.valueOf(remainingMinutes)).replace("%s", String.valueOf(remainingSeconds));
                     Text actionBarText = Text.of(actionbarText);
 
-                    // Send action bar message to player
                     player.sendMessage(actionBarText, true);
 
-                    // Check if player playtime exceeds the maximum playtime
                     if (remainingPlaytime >= MAX_PLAYTIME_SECONDS) {
-                        // Kick the player from the server
-                        player.networkHandler.disconnect(Text.of(KICK_MESSAGE));
+                        playersToKick.add(player);
                     }
+                }
+
+                // Kick players after iteration
+                for (ServerPlayerEntity player : playersToKick) {
+                    player.networkHandler.disconnect(Text.of(KICK_MESSAGE));
+                    // Do not remove the player’s playtime from the map, to ensure their playtime persists across reconnects
+                    // playerPlaytimes.remove(player.getUuid().toString());
                 }
 
                 // Update PlaytimeData with player playtimes
                 playtimeData.setPlayerPlaytimes(playerPlaytimes);
             }
 
-            // Save playtime data
             try {
                 PlaytimeDataManager.savePlaytimeData(playtimeData);
             } catch (IOException e) {
