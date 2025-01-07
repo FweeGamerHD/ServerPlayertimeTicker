@@ -1,22 +1,24 @@
 package freegamerdev.serverplayertimeticker.DataClasses;
 
 public class ConfigData {
-    private int maxPlaytimeMinutes;
+    private int maxPlaytimeSeconds;
     private String actionbarText;
     private String kickMessage;
+    private String resetMessage;
 
     public ConfigData() {
-        maxPlaytimeMinutes = 120;
-        actionbarText = "Remaining Playtime: %m minutes and %s seconds";
+        maxPlaytimeSeconds = 5 * 60 * 60;
+        actionbarText = "§e{{time}} {{progressbar}}";
         kickMessage = "You have exceeded the maximum playtime for today.";
+        resetMessage = "§eIts new day! Playtime has been resetted.";
     }
 
-    public int getMaxPlaytimeMinutes() {
-        return maxPlaytimeMinutes;
+    public int getMaxPlaytimeSeconds() {
+        return maxPlaytimeSeconds;
     }
 
-    public void setMaxPlaytimeMinutes(int maxPlaytimeMinutes) {
-        this.maxPlaytimeMinutes = maxPlaytimeMinutes;
+    public void setMaxPlaytimeSeconds(int maxPlaytimeSeconds) {
+        this.maxPlaytimeSeconds = maxPlaytimeSeconds;
     }
 
     public String getActionbarText() {
@@ -33,5 +35,13 @@ public class ConfigData {
 
     public void setKickMessage(String kickMessage) {
         this.kickMessage = kickMessage;
+    }
+
+    public String getResetMessage() {
+        return resetMessage;
+    }
+
+    public void setResetMessage(String resetMessage) {
+        this.resetMessage = resetMessage;
     }
 }
